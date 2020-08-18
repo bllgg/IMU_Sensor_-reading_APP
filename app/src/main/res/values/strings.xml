@@ -2,4 +2,6 @@
     <string name="app_name">IMU</string>
     <string name="hello_world">Hello World</string>
     <string name="string_hello_world" />
+    <string name="hello_app">Hello_App</string>
+    <string name="textview">TextView</string>
 </resources>
