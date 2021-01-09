@@ -50,30 +50,30 @@ public class MainActivity extends AppCompatActivity {
         public void onSensorChanged(SensorEvent event) {
             float[] values = event.values;
             double x_value, y_value, z_value;
-            double roll, pitch, yaw;
-            int d_roll, d_pitch, d_yaw;
-            double magLength;
-            double[] normMagVals = new double[3];
+//            double roll, pitch, yaw;
+//            int d_roll, d_pitch, d_yaw;
+//            double magLength;
+//            double[] normMagVals = new double[3];
             x_value = 1.008 * values[0] - 0.1803;
             y_value = 1.011 * values[1] + 0.492;
             z_value = 0.999 * values[2] - 0.3397;
             third_txt.setText("ACCELERATION\nx axis: "+x_value+"\ny axis: "+y_value+"\nz axis: "+z_value);
 
-            roll = Math.atan2(y_value, z_value + 0.05*x_value);
-            pitch = Math.atan2(x_value, Math.sqrt(y_value * y_value + z_value * z_value));
-
-            magLength = Math.sqrt(mag_values[0]*mag_values[0] + mag_values[1]*mag_values[1] + mag_values[2]*mag_values[2]);
-            normMagVals[0] = mag_values[0]/magLength;
-            normMagVals[1] = mag_values[1]/magLength;
-            normMagVals[2] = mag_values[2]/magLength;
-
-            yaw = Math.atan2(Math.sin(roll)*normMagVals[2] - Math.cos(roll)*normMagVals[1], Math.cos(pitch)*normMagVals[0] + Math.sin(roll)*Math.sin(pitch)*normMagVals[1] + Math.cos(roll)*Math.sin(pitch)*normMagVals[2]);
-
-            d_pitch = (int) Math.round( pitch * 180 / Math.PI );
-            d_roll = (int) Math.round( roll * 180 / Math.PI );
-            d_yaw = (int) Math.round(yaw * 180 / Math.PI);
-
-            forth_text.setText("ORIENTATION\nRoll: "+d_roll+"\nPitch: "+d_pitch+"\nYaw: "+d_yaw);
+//            roll = Math.atan2(y_value, z_value + 0.05*x_value);
+//            pitch = Math.atan2(x_value, Math.sqrt(y_value * y_value + z_value * z_value));
+//
+//            magLength = Math.sqrt(mag_values[0]*mag_values[0] + mag_values[1]*mag_values[1] + mag_values[2]*mag_values[2]);
+//            normMagVals[0] = mag_values[0]/magLength;
+//            normMagVals[1] = mag_values[1]/magLength;
+//            normMagVals[2] = mag_values[2]/magLength;
+//
+//            yaw = Math.atan2(Math.sin(roll)*normMagVals[2] - Math.cos(roll)*normMagVals[1], Math.cos(pitch)*normMagVals[0] + Math.sin(roll)*Math.sin(pitch)*normMagVals[1] + Math.cos(roll)*Math.sin(pitch)*normMagVals[2]);
+//
+//            d_pitch = (int) Math.round( pitch * 180 / Math.PI );
+//            d_roll = (int) Math.round( roll * 180 / Math.PI );
+//            d_yaw = (int) Math.round(yaw * 180 / Math.PI);
+//
+//            forth_text.setText("ORIENTATION\nRoll: "+d_roll+"\nPitch: "+d_pitch+"\nYaw: "+d_yaw);
         }
         @Override
         public void onAccuracyChanged(Sensor sensor, int accuracy) {}
