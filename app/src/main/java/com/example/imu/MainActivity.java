@@ -9,18 +9,38 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
+    String tag = "IMU";
+    String pattern = "MM_dd_yyyy_HH:mm:ss";
+    DateFormat df;
+    Date today;
+    String file_name;
+    String file_path;
+    File myExternalFile;
+    String myData = ""; //////////////////////
 
     private SensorManager sensorManager;
     private Sensor sensor;
     private List list_acc, list_gyro, list_mag;
     TextView text, scnd_txt, third_txt, forth_text;
     private float[] mag_values = new float[3];
+    private float[] gyr_values = new float[3];
+
+    double x_acc_value, y_acc_value, z_acc_value;
 
     SensorEventListener sel_gyro = new SensorEventListener(){
         @Override
@@ -28,8 +48,8 @@ public class MainActivity extends AppCompatActivity {
         @SuppressLint("SetTextI18n")
         @Override
         public void onSensorChanged(SensorEvent event) {
-            float[] values = event.values;
-            scnd_txt.setText("GYROSCOPE\nx axis: "+values[0]+"\ny axis: "+values[1]+"\nz axis: "+values[2]);
+            gyr_values = event.values;
+            scnd_txt.setText("GYROSCOPE\nx axis: "+gyr_values[0]+"\ny axis: "+gyr_values[1]+"\nz axis: "+gyr_values[2]);
         }
     };
 
@@ -49,15 +69,15 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onSensorChanged(SensorEvent event) {
             float[] values = event.values;
-            double x_value, y_value, z_value;
+
 //            double roll, pitch, yaw;
 //            int d_roll, d_pitch, d_yaw;
 //            double magLength;
 //            double[] normMagVals = new double[3];
-            x_value = 1.008 * values[0] - 0.1803;
-            y_value = 1.011 * values[1] + 0.492;
-            z_value = 0.999 * values[2] - 0.3397;
-            third_txt.setText("ACCELERATION\nx axis: "+x_value+"\ny axis: "+y_value+"\nz axis: "+z_value);
+            x_acc_value = 1.008 * values[0] - 0.1803;
+            y_acc_value = 1.011 * values[1] + 0.492;
+            z_acc_value = 0.999 * values[2] - 0.3397;
+            third_txt.setText("ACCELERATION\nx axis: "+x_acc_value+"\ny axis: "+y_acc_value+"\nz axis: "+z_acc_value);
 
 //            roll = Math.atan2(y_value, z_value + 0.05*x_value);
 //            pitch = Math.atan2(x_value, Math.sqrt(y_value * y_value + z_value * z_value));
@@ -84,6 +104,20 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_main);
+        // Create an instance of SimpleDateFormat used for formatting
+        // the string representation of date according to the chosen pattern
+        df = new SimpleDateFormat(pattern);
+
+        // Get the today date using Calendar object.
+        today = Calendar.getInstance().getTime();
+        // Using DateFormat format method we can create a string
+        // representation of a date with the defined format.
+        String todayAsString = df.format(today);
+        file_name = "IMU_Data_"+todayAsString+".csv";
+//        file_name = "IMU_Data_.csv";
+
+        Log.i(tag, "Today is: " + file_name);
+
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         sensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         text = (TextView) findViewById(R.id.main_txt);
@@ -96,22 +130,42 @@ public class MainActivity extends AppCompatActivity {
         list_gyro = sensorManager.getSensorList(Sensor.TYPE_GYROSCOPE);
 
         if(list_acc.size()>0){
-            sensorManager.registerListener(sel_acc, (Sensor) list_acc.get(0), SensorManager.SENSOR_DELAY_NORMAL); // in here we register the sensors to the variables.
+            sensorManager.registerListener(sel_acc, (Sensor) list_acc.get(0), SensorManager.SENSOR_DELAY_FASTEST); // in here we register the sensors to the variables.
         }else{
             Toast.makeText(getBaseContext(), "Error: No Accelerometer.", Toast.LENGTH_LONG).show();
         }
 
         if(list_mag.size()>0){
-            sensorManager.registerListener(sel_mag, (Sensor) list_mag.get(0), SensorManager.SENSOR_DELAY_UI); // in here we register the sensors to the variables.
+            sensorManager.registerListener(sel_mag, (Sensor) list_mag.get(0), SensorManager.SENSOR_DELAY_FASTEST); // in here we register the sensors to the variables.
         }else{
             Toast.makeText(getBaseContext(), "Error: No Magnetometer.", Toast.LENGTH_LONG).show();
         }
 
         if(list_gyro.size()>0){
-            sensorManager.registerListener(sel_gyro, (Sensor) list_gyro.get(0), SensorManager.SENSOR_DELAY_UI);  // here also we register the sensors to the variables.
+            sensorManager.registerListener(sel_gyro, (Sensor) list_gyro.get(0), SensorManager.SENSOR_DELAY_FASTEST);  // here also we register the sensors to the variables.
         }else{
             Toast.makeText(getBaseContext(), "Error: No Gyroscope.", Toast.LENGTH_LONG).show();
         }
+
+        Thread dlthread = new Thread(){
+            @Override
+            public void run() {
+                while (true){
+                    myData = x_acc_value+","+y_acc_value+","+z_acc_value+","+gyr_values[0]+","+gyr_values[1]+","+gyr_values[2]+","+mag_values[0]+","+mag_values[1]+","+mag_values[2]+"\n";
+                    Log.i(tag, myData);
+
+                    writeToFile(myData);
+                    try {
+                        synchronized (this) {
+                            this.wait(100);
+                        }
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        };
+        dlthread.start();
     }
 
     @Override
@@ -128,5 +182,20 @@ public class MainActivity extends AppCompatActivity {
             sensorManager.unregisterListener((sel_acc));
         }
         super.onStop();
+    }
+
+    private void writeToFile(String message)
+    {
+        try {
+            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(openFileOutput(file_name,Context.MODE_APPEND));
+            outputStreamWriter.write(message);
+            outputStreamWriter.close();
+
+        } catch(FileNotFoundException e)
+        {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
